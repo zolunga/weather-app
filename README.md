@@ -16,3 +16,9 @@ This phase implements the backend only.
 ## Backend
 
 See [backend/README.md](backend/README.md) for setup, environment variables, API documentation, and test instructions.
+
+The backend includes Swagger documentation. After starting the API, open:
+
+```text
+http://localhost:3000/docs
+```
