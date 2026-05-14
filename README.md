@@ -29,6 +29,40 @@ weather-app/
 - Node.js 20 or newer
 - npm
 - OpenWeatherMap API key
+- Docker and Docker Compose, if running the full app in containers
+
+## Docker Setup
+
+Create `backend/.env` from `backend/.env.example` and set your **OpenWeatherMap API key**.
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Then start both services from the repository root:
+
+```bash
+docker compose up --build
+```
+
+The frontend runs at:
+
+```text
+http://localhost:3000
+```
+
+The backend API runs at:
+
+```text
+http://localhost:8000
+```
+
+Swagger UI is available at:
+
+```text
+http://localhost:8000/docs
+```
 
 ## Backend Setup
 
