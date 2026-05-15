@@ -3,7 +3,7 @@ import { WeatherController } from './weather.controller';
 import { WeatherService } from './weather.service';
 import { WeatherInsightsService } from './weather-insights.service';
 import { CacheService } from './cache.service';
-import { WeatherMapper } from './mappers/weather.mapper';
+import { OpenWeatherMapper } from './mappers/open-weather.mapper';
 import { OpenWeatherProvider } from './providers/open-weather.provider';
 import { WEATHER_PROVIDER } from './providers/weather-provider.interface';
 
@@ -13,7 +13,7 @@ import { WEATHER_PROVIDER } from './providers/weather-provider.interface';
     CacheService,
     WeatherService,
     WeatherInsightsService,
-    WeatherMapper,
+    OpenWeatherMapper,
     {
       provide: WEATHER_PROVIDER,
       useClass: OpenWeatherProvider,

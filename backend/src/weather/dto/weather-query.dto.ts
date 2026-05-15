@@ -8,7 +8,7 @@ import {
 
 export class WeatherQueryDto {
   @ApiProperty({
-    description: 'City, ZIP code, or location text accepted by OpenWeatherMap',
+    description: 'City, or location name text accepted by OpenWeatherMap',
     example: 'Atlanta',
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

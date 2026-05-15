@@ -10,42 +10,98 @@ import {
   WeatherProvider,
 } from '../src/weather/providers/weather-provider.interface';
 import {
-  OpenWeatherCurrentResponse,
-  OpenWeatherForecastResponse,
-} from '../src/weather/types/open-weather.types';
+  CurrentWeather,
+  WeatherForecast,
+} from '../src/weather/models/weather.models';
 import { WeatherUnits } from '../src/weather/types/weather-units.type';
 
 describe('App e2e', () => {
-  const currentWeatherResponse: OpenWeatherCurrentResponse = {
-    coord: { lat: 19.4326, lon: -99.1332 },
-    weather: [{ main: 'Clear', description: 'clear sky' }],
-    main: { temp: 23, feels_like: 22, humidity: 45 },
-    wind: { speed: 2.5, deg: 130 },
-    dt: 1778846400,
-    name: 'Mexico City',
-    sys: { country: 'MX' },
-  };
-
-  const forecastResponse: OpenWeatherForecastResponse = {
-    city: {
+  const currentWeatherResponse: CurrentWeather = {
+    location: {
       name: 'Mexico City',
       country: 'MX',
-      coord: { lat: 19.4326, lon: -99.1332 },
+      coordinates: {
+        latitude: 19.4326,
+        longitude: -99.1332,
+      },
     },
-    list: [
+    observedAt: '2026-05-15T12:00:00.000Z',
+    condition: {
+      main: 'Clear',
+      description: 'clear sky',
+    },
+    temperature: {
+      current: 23,
+      feelsLike: 22,
+      unit: 'celsius',
+    },
+    humidity: {
+      value: 45,
+      unit: 'percent',
+    },
+    wind: {
+      speed: 2.5,
+      unit: 'm/s',
+      directionDegrees: 130,
+    },
+    insights: [],
+  };
+
+  const forecastResponse: WeatherForecast = {
+    location: {
+      name: 'Mexico City',
+      country: 'MX',
+      coordinates: {
+        latitude: 19.4326,
+        longitude: -99.1332,
+      },
+    },
+    items: [
       {
-        dt: 1778857200,
-        main: { temp: 24, feels_like: 23, humidity: 48 },
-        weather: [{ main: 'Clouds', description: 'scattered clouds' }],
-        wind: { speed: 3.1, deg: 150 },
-        pop: 0.2,
+        forecastedAt: '2026-05-15T15:00:00.000Z',
+        condition: {
+          main: 'Clouds',
+          description: 'scattered clouds',
+        },
+        temperature: {
+          current: 24,
+          feelsLike: 23,
+          unit: 'celsius',
+        },
+        humidity: {
+          value: 48,
+          unit: 'percent',
+        },
+        wind: {
+          speed: 3.1,
+          unit: 'm/s',
+          directionDegrees: 150,
+        },
+        precipitationProbability: 0.2,
+        insights: [],
       },
       {
-        dt: 1778868000,
-        main: { temp: 21, feels_like: 21, humidity: 74 },
-        weather: [{ main: 'Rain', description: 'light rain' }],
-        wind: { speed: 4.2, deg: 170 },
-        pop: 0.62,
+        forecastedAt: '2026-05-15T18:00:00.000Z',
+        condition: {
+          main: 'Rain',
+          description: 'light rain',
+        },
+        temperature: {
+          current: 21,
+          feelsLike: 21,
+          unit: 'celsius',
+        },
+        humidity: {
+          value: 74,
+          unit: 'percent',
+        },
+        wind: {
+          speed: 4.2,
+          unit: 'm/s',
+          directionDegrees: 170,
+        },
+        precipitationProbability: 0.62,
+        insights: [],
       },
     ],
   };
@@ -55,8 +111,8 @@ describe('App e2e', () => {
 
   beforeEach(async () => {
     provider = {
-      getCurrentWeather: vi.fn().mockResolvedValue(currentWeatherResponse),
-      getForecast: vi.fn().mockResolvedValue(forecastResponse),
+      getCurrentWeather: vi.fn().mockResolvedValue(structuredClone(currentWeatherResponse)),
+      getForecast: vi.fn().mockResolvedValue(structuredClone(forecastResponse)),
     };
 
     const logger = {

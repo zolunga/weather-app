@@ -126,6 +126,6 @@ or require `OPENWEATHER_API_KEY`.
 - Controllers expose normalized API contracts and never return raw OpenWeather responses.
 - `WeatherProvider` is an interface-style provider token, so OpenWeather can be replaced later.
 - `OpenWeatherProvider` owns vendor URL construction, API key use, and upstream error mapping.
-- `WeatherMapper` translates vendor payloads into internal response DTOs.
+- `OpenWeatherMapper` translates OpenWeather payloads into normalized internal weather models.
 - `WeatherInsightsService` contains the business logic for umbrella, humidity, wind, and comfort insights.
 - `HttpExceptionFilter` centralizes error response shape.

@@ -18,11 +18,10 @@ export function WeatherPage() {
     <main className="app-shell">
       <section className="hero" aria-labelledby="app-title">
         <div>
-          <p className="eyebrow">Weather App</p>
-          <h1 id="app-title">Reliable local weather, built for quick decisions.</h1>
+          <h1 id="app-title">Weather App</h1>
           <p>
             Search a location to see current conditions, forecast details, and practical
-            recommendations from the backend.
+            recommendations.
           </p>
         </div>
         <WeatherSearchForm isLoading={isLoading} onSubmit={submitSearch} />

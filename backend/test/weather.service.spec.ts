@@ -1,46 +1,88 @@
-import { WeatherMapper } from '../src/weather/mappers/weather.mapper';
 import { WeatherProvider } from '../src/weather/providers/weather-provider.interface';
 import { CacheService } from '../src/weather/cache.service';
 import { WeatherInsightsService } from '../src/weather/weather-insights.service';
 import { WeatherService } from '../src/weather/weather.service';
 import {
-  OpenWeatherCurrentResponse,
-  OpenWeatherForecastResponse,
-} from '../src/weather/types/open-weather.types';
+  CurrentWeather,
+  WeatherForecast,
+} from '../src/weather/models/weather.models';
 import { WeatherUnits } from '../src/weather/types/weather-units.type';
 import { vi, type Mocked } from 'vitest';
 
 describe('WeatherService', () => {
-  const currentResponse: OpenWeatherCurrentResponse = {
-    coord: { lat: 33.749, lon: -84.388 },
-    weather: [{ main: 'Clear', description: 'clear sky' }],
-    main: { temp: 22, feels_like: 21, humidity: 40 },
-    wind: { speed: 2, deg: 180 },
-    dt: 1778708400,
-    name: 'Atlanta',
-    sys: { country: 'US' },
-  };
-
-  const forecastResponse: OpenWeatherForecastResponse = {
-    city: {
-      name: 'Atlanta',
-      country: 'US',
-      coord: { lat: 33.749, lon: -84.388 },
-    },
-    list: [
-      {
-        dt: 1778722800,
-        main: { temp: 20, feels_like: 19, humidity: 44 },
-        weather: [{ main: 'Clear', description: 'clear sky' }],
-        wind: { speed: 2 },
-        pop: 0.1,
-      },
-    ],
-  };
-
   let provider: Mocked<WeatherProvider>;
   let service: WeatherService;
   let cacheService: CacheService;
+
+  function createCurrentWeather(): CurrentWeather {
+    return {
+      location: {
+        name: 'Atlanta',
+        country: 'US',
+        coordinates: {
+          latitude: 33.749,
+          longitude: -84.388,
+        },
+      },
+      observedAt: '2026-05-13T21:40:00.000Z',
+      condition: {
+        main: 'Clear',
+        description: 'clear sky',
+      },
+      temperature: {
+        current: 22,
+        feelsLike: 21,
+        unit: 'celsius',
+      },
+      humidity: {
+        value: 40,
+        unit: 'percent',
+      },
+      wind: {
+        speed: 2,
+        unit: 'm/s',
+        directionDegrees: 180,
+      },
+      insights: [],
+    };
+  }
+
+  function createForecast(): WeatherForecast {
+    return {
+      location: {
+        name: 'Atlanta',
+        country: 'US',
+        coordinates: {
+          latitude: 33.749,
+          longitude: -84.388,
+        },
+      },
+      items: [
+        {
+          forecastedAt: '2026-05-14T01:40:00.000Z',
+          condition: {
+            main: 'Clear',
+            description: 'clear sky',
+          },
+          temperature: {
+            current: 20,
+            feelsLike: 19,
+            unit: 'celsius',
+          },
+          humidity: {
+            value: 44,
+            unit: 'percent',
+          },
+          wind: {
+            speed: 2,
+            unit: 'm/s',
+          },
+          precipitationProbability: 0.1,
+          insights: [],
+        },
+      ],
+    };
+  }
 
   function createCacheService(ttlSeconds = 600): CacheService {
     return new CacheService(
@@ -57,14 +99,13 @@ describe('WeatherService', () => {
 
   beforeEach(() => {
     provider = {
-      getCurrentWeather: vi.fn().mockResolvedValue(currentResponse),
-      getForecast: vi.fn().mockResolvedValue(forecastResponse),
+      getCurrentWeather: vi.fn().mockResolvedValue(createCurrentWeather()),
+      getForecast: vi.fn().mockResolvedValue(createForecast()),
     };
     cacheService = createCacheService();
 
     service = new WeatherService(
       provider,
-      new WeatherMapper(),
       new WeatherInsightsService(),
       cacheService,
     );
@@ -100,11 +141,19 @@ describe('WeatherService', () => {
     ]);
   });
 
-  it('passes requested units through provider, mapper, and insights', async () => {
+  it('passes requested units through provider and insights', async () => {
     provider.getCurrentWeather.mockResolvedValue({
-      ...currentResponse,
-      main: { temp: 22, feels_like: 21, humidity: 40 },
-      wind: { speed: 2, deg: 180 },
+      ...createCurrentWeather(),
+      temperature: {
+        current: 22,
+        feelsLike: 21,
+        unit: 'celsius',
+      },
+      wind: {
+        speed: 2,
+        unit: 'm/s',
+        directionDegrees: 180,
+      },
     });
 
     const result = await service.getCurrentWeather('Atlanta', WeatherUnits.Metric);
@@ -143,7 +192,6 @@ describe('WeatherService', () => {
     cacheService = createCacheService(1);
     service = new WeatherService(
       provider,
-      new WeatherMapper(),
       new WeatherInsightsService(),
       cacheService,
     );
@@ -176,7 +224,7 @@ describe('WeatherService', () => {
   it('does not cache failed provider responses', async () => {
     provider.getCurrentWeather
       .mockRejectedValueOnce(new Error('OpenWeather failed'))
-      .mockResolvedValueOnce(currentResponse);
+      .mockResolvedValueOnce(createCurrentWeather());
 
     await expect(service.getCurrentWeather('Atlanta')).rejects.toThrow(
       'OpenWeather failed',

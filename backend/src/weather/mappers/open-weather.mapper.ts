@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  CurrentWeatherResponseDto,
-  ForecastWeatherResponseDto,
-} from '../dto/weather-response.dto';
+  CurrentWeather,
+  WeatherForecast,
+} from '../models/weather.models';
 import {
   OpenWeatherCurrentResponse,
   OpenWeatherForecastResponse,
@@ -15,11 +15,11 @@ import {
 } from '../types/weather-units.type';
 
 @Injectable()
-export class WeatherMapper {
+export class OpenWeatherMapper {
   toCurrentWeather(
     response: OpenWeatherCurrentResponse,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): CurrentWeatherResponseDto {
+  ): CurrentWeather {
     const condition = response.weather[0];
 
     return {
@@ -57,7 +57,7 @@ export class WeatherMapper {
   toForecast(
     response: OpenWeatherForecastResponse,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): ForecastWeatherResponseDto {
+  ): WeatherForecast {
     return {
       location: {
         name: response.city.name,

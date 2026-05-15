@@ -7,6 +7,7 @@ export default defineConfig({
       reportsDirectory: './coverage',
     },
     environment: 'node',
+    exclude: ['test/**/*.e2e-spec.ts'],
     globals: true,
     include: ['test/**/*.spec.ts'],
   },

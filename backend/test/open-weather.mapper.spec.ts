@@ -1,12 +1,12 @@
-import { WeatherMapper } from '../src/weather/mappers/weather.mapper';
+import { OpenWeatherMapper } from '../src/weather/mappers/open-weather.mapper';
 import {
   OpenWeatherCurrentResponse,
   OpenWeatherForecastResponse,
 } from '../src/weather/types/open-weather.types';
 import { WeatherUnits } from '../src/weather/types/weather-units.type';
 
-describe('WeatherMapper', () => {
-  const mapper = new WeatherMapper();
+describe('OpenWeatherMapper', () => {
+  const mapper = new OpenWeatherMapper();
 
   it('maps OpenWeather current weather into a normalized DTO using metric units by default', () => {
     const response: OpenWeatherCurrentResponse = {

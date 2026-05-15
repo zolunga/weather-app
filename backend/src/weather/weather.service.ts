@@ -1,10 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  CurrentWeatherResponseDto,
-  ForecastWeatherResponseDto,
-} from './dto/weather-response.dto';
-import { WeatherMapper } from './mappers/weather.mapper';
-import {
   WEATHER_PROVIDER,
   WeatherProvider,
 } from './providers/weather-provider.interface';
@@ -14,13 +9,13 @@ import {
 } from './types/weather-units.type';
 import { CacheService } from './cache.service';
 import { WeatherInsightsService } from './weather-insights.service';
+import { CurrentWeather, WeatherForecast } from './models/weather.models';
 
 @Injectable()
 export class WeatherService {
   constructor(
     @Inject(WEATHER_PROVIDER)
     private readonly weatherProvider: WeatherProvider,
-    private readonly weatherMapper: WeatherMapper,
     private readonly weatherInsightsService: WeatherInsightsService,
     private readonly cacheService: CacheService,
   ) {}
@@ -28,20 +23,19 @@ export class WeatherService {
   async getCurrentWeather(
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): Promise<CurrentWeatherResponseDto> {
+  ): Promise<CurrentWeather> {
     const cacheKey = { endpoint: 'current' as const, location, units };
     const cachedWeather =
-      this.cacheService.get<CurrentWeatherResponseDto>(cacheKey);
+      this.cacheService.get<CurrentWeather>(cacheKey);
 
     if (cachedWeather) {
       return cachedWeather;
     }
 
-    const vendorResponse = await this.weatherProvider.getCurrentWeather(
+    const currentWeather = await this.weatherProvider.getCurrentWeather(
       location,
       units,
     );
-    const currentWeather = this.weatherMapper.toCurrentWeather(vendorResponse, units);
 
     currentWeather.insights = this.weatherInsightsService.generate({
       conditionMain: currentWeather.condition.main,
@@ -61,17 +55,16 @@ export class WeatherService {
   async getForecast(
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): Promise<ForecastWeatherResponseDto> {
+  ): Promise<WeatherForecast> {
     const cacheKey = { endpoint: 'forecast' as const, location, units };
     const cachedForecast =
-      this.cacheService.get<ForecastWeatherResponseDto>(cacheKey);
+      this.cacheService.get<WeatherForecast>(cacheKey);
 
     if (cachedForecast) {
       return cachedForecast;
     }
 
-    const vendorResponse = await this.weatherProvider.getForecast(location, units);
-    const forecast = this.weatherMapper.toForecast(vendorResponse, units);
+    const forecast = await this.weatherProvider.getForecast(location, units);
 
     forecast.items = forecast.items.map((item) => ({
       ...item,

@@ -10,10 +10,12 @@ import {
   OpenWeatherCurrentResponse,
   OpenWeatherForecastResponse,
 } from '../types/open-weather.types';
+import { CurrentWeather, WeatherForecast } from '../models/weather.models';
 import {
   DEFAULT_WEATHER_UNITS,
   WeatherUnits,
 } from '../types/weather-units.type';
+import { OpenWeatherMapper } from '../mappers/open-weather.mapper';
 import { WeatherProvider } from './weather-provider.interface';
 
 @Injectable()
@@ -23,22 +25,25 @@ export class OpenWeatherProvider implements WeatherProvider {
   constructor(
     private readonly configService: ConfigService,
     private readonly appLogger: AppLogger,
+    private readonly openWeatherMapper: OpenWeatherMapper,
   ) {}
 
   async getCurrentWeather(
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): Promise<OpenWeatherCurrentResponse> {
+  ): Promise<CurrentWeather> {
     const url = this.buildUrl('/data/2.5/weather', location, units);
-    return this.fetchJson<OpenWeatherCurrentResponse>(url, location);
+    const response = await this.fetchJson<OpenWeatherCurrentResponse>(url, location);
+    return this.openWeatherMapper.toCurrentWeather(response, units);
   }
 
   async getForecast(
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
-  ): Promise<OpenWeatherForecastResponse> {
+  ): Promise<WeatherForecast> {
     const url = this.buildUrl('/data/2.5/forecast', location, units);
-    return this.fetchJson<OpenWeatherForecastResponse>(url, location);
+    const response = await this.fetchJson<OpenWeatherForecastResponse>(url, location);
+    return this.openWeatherMapper.toForecast(response, units);
   }
 
   private buildUrl(path: string, location: string, units: WeatherUnits): URL {
