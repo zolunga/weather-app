@@ -15,11 +15,21 @@ export function WeatherSearchForm({ isLoading = false, onSubmit }: WeatherSearch
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!trimmedLocation) {
+    if (!trimmedLocation || isLoading) {
       return;
     }
 
     onSubmit({ location: trimmedLocation, units });
+  }
+
+  function handleUnitsChange(nextUnits: WeatherUnits) {
+    setUnits(nextUnits);
+
+    if (!trimmedLocation || isLoading || nextUnits === units) {
+      return;
+    }
+
+    onSubmit({ location: trimmedLocation, units: nextUnits });
   }
 
   return (
@@ -39,7 +49,7 @@ export function WeatherSearchForm({ isLoading = false, onSubmit }: WeatherSearch
           {isLoading ? 'Searching' : 'Search'}
         </button>
       </div>
-      <UnitToggle value={units} onChange={setUnits} />
+      <UnitToggle disabled={isLoading} value={units} onChange={handleUnitsChange} />
     </form>
   );
 }
