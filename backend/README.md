@@ -101,10 +101,13 @@ curl --location 'http://localhost:3000/weather/forecast?location=Atlanta&units=s
 
 ```bash
 npm run test
+npm run test:e2e
 npm run build
 ```
 
-Tests run with Vitest.
+Tests run with Vitest. End-to-end API tests use Supertest against a NestJS
+`TestingModule` and mock the weather provider, so they do not call OpenWeather
+or require `OPENWEATHER_API_KEY`.
 
 ## Production readiness
 
