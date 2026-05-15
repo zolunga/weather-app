@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AppLogger } from '../../common/logger/app-logger.service';
 import {
   OpenWeatherCurrentResponse,
   OpenWeatherForecastResponse,
@@ -17,7 +18,12 @@ import { WeatherProvider } from './weather-provider.interface';
 
 @Injectable()
 export class OpenWeatherProvider implements WeatherProvider {
-  constructor(private readonly configService: ConfigService) {}
+  private readonly logContext = 'OpenWeatherProvider';
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly appLogger: AppLogger,
+  ) {}
 
   async getCurrentWeather(
     location: string,
@@ -61,6 +67,10 @@ export class OpenWeatherProvider implements WeatherProvider {
     try {
       response = await fetch(url);
     } catch {
+      this.appLogger.warn(this.logContext, 'openweather.request_failed', {
+        reason: 'network_error',
+        vendorPath: url.pathname,
+      });
       throw new BadGatewayException('Weather provider is unavailable');
     }
 
@@ -71,25 +81,46 @@ export class OpenWeatherProvider implements WeatherProvider {
     try {
       return (await response.json()) as T;
     } catch {
+      this.appLogger.warn(this.logContext, 'openweather.request_failed', {
+        reason: 'invalid_json',
+        vendorPath: url.pathname,
+        statusCode: response.status,
+      });
       throw new BadGatewayException('Weather provider returned invalid JSON');
     }
   }
 
   private mapProviderError(statusCode: number, location: string): Error {
     if (statusCode === 404) {
+      this.appLogger.warn(this.logContext, 'openweather.location_not_found', {
+        statusCode,
+        location,
+      });
       return new NotFoundException(`Location "${location}" was not found`);
     }
 
     if (statusCode === 401 || statusCode === 403) {
+      this.appLogger.error(this.logContext, 'openweather.request_failed', {
+        reason: 'credentials_rejected',
+        statusCode,
+      });
       return new BadGatewayException('Weather provider rejected the API credentials');
     }
 
     if (statusCode === 429 || statusCode >= 500) {
+      this.appLogger.warn(this.logContext, 'openweather.request_failed', {
+        reason: statusCode === 429 ? 'rate_limited' : 'provider_unavailable',
+        statusCode,
+      });
       return new ServiceUnavailableException(
         'Weather provider is temporarily unavailable',
       );
     }
 
+    this.appLogger.warn(this.logContext, 'openweather.request_failed', {
+      reason: 'unexpected_status',
+      statusCode,
+    });
     return new BadGatewayException('Weather provider returned an unexpected error');
   }
 }

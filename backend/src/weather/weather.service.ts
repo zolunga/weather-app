@@ -12,6 +12,7 @@ import {
   DEFAULT_WEATHER_UNITS,
   WeatherUnits,
 } from './types/weather-units.type';
+import { CacheService } from './cache.service';
 import { WeatherInsightsService } from './weather-insights.service';
 
 @Injectable()
@@ -21,12 +22,21 @@ export class WeatherService {
     private readonly weatherProvider: WeatherProvider,
     private readonly weatherMapper: WeatherMapper,
     private readonly weatherInsightsService: WeatherInsightsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getCurrentWeather(
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
   ): Promise<CurrentWeatherResponseDto> {
+    const cacheKey = { endpoint: 'current' as const, location, units };
+    const cachedWeather =
+      this.cacheService.get<CurrentWeatherResponseDto>(cacheKey);
+
+    if (cachedWeather) {
+      return cachedWeather;
+    }
+
     const vendorResponse = await this.weatherProvider.getCurrentWeather(
       location,
       units,
@@ -43,6 +53,8 @@ export class WeatherService {
       windSpeed: currentWeather.wind.speed,
     });
 
+    this.cacheService.set(cacheKey, currentWeather);
+
     return currentWeather;
   }
 
@@ -50,6 +62,14 @@ export class WeatherService {
     location: string,
     units: WeatherUnits = DEFAULT_WEATHER_UNITS,
   ): Promise<ForecastWeatherResponseDto> {
+    const cacheKey = { endpoint: 'forecast' as const, location, units };
+    const cachedForecast =
+      this.cacheService.get<ForecastWeatherResponseDto>(cacheKey);
+
+    if (cachedForecast) {
+      return cachedForecast;
+    }
+
     const vendorResponse = await this.weatherProvider.getForecast(location, units);
     const forecast = this.weatherMapper.toForecast(vendorResponse, units);
 
@@ -65,6 +85,8 @@ export class WeatherService {
         windSpeed: item.wind.speed,
       }),
     }));
+
+    this.cacheService.set(cacheKey, forecast);
 
     return forecast;
   }

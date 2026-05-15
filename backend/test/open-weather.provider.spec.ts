@@ -4,12 +4,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AppLogger } from '../src/common/logger/app-logger.service';
 import { OpenWeatherProvider } from '../src/weather/providers/open-weather.provider';
 import { WeatherUnits } from '../src/weather/types/weather-units.type';
-import { vi, type Mock } from 'vitest';
+import { vi, type Mock, type Mocked } from 'vitest';
 
 describe('OpenWeatherProvider', () => {
   let configService: ConfigService;
+  let appLogger: Mocked<AppLogger>;
   let provider: OpenWeatherProvider;
   let fetchMock: Mock;
 
@@ -24,7 +26,12 @@ describe('OpenWeatherProvider', () => {
         return values[key];
       }),
     } as unknown as ConfigService;
-    provider = new OpenWeatherProvider(configService);
+    appLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    } as unknown as Mocked<AppLogger>;
+    provider = new OpenWeatherProvider(configService, appLogger);
     fetchMock = vi.fn();
     global.fetch = fetchMock;
   });
@@ -54,6 +61,14 @@ describe('OpenWeatherProvider', () => {
     await expect(provider.getCurrentWeather('Missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+    expect(appLogger.warn).toHaveBeenCalledWith(
+      'OpenWeatherProvider',
+      'openweather.location_not_found',
+      {
+        location: 'Missing',
+        statusCode: 404,
+      },
+    );
   });
 
   it('maps OpenWeather auth failures to BadGatewayException', async () => {
@@ -62,6 +77,7 @@ describe('OpenWeatherProvider', () => {
     await expect(provider.getForecast('Atlanta')).rejects.toBeInstanceOf(
       BadGatewayException,
     );
+    expect(JSON.stringify(appLogger.error.mock.calls)).not.toContain('test-api-key');
   });
 
   it('maps OpenWeather rate limits to ServiceUnavailableException', async () => {
@@ -86,6 +102,14 @@ describe('OpenWeatherProvider', () => {
     await expect(provider.getCurrentWeather('Atlanta')).rejects.toBeInstanceOf(
       BadGatewayException,
     );
+    expect(appLogger.warn).toHaveBeenCalledWith(
+      'OpenWeatherProvider',
+      'openweather.request_failed',
+      {
+        reason: 'network_error',
+        vendorPath: '/data/2.5/weather',
+      },
+    );
   });
 
   it('fails clearly when the provider API key is not configured', async () => {
@@ -95,7 +119,7 @@ describe('OpenWeatherProvider', () => {
       ),
     } as unknown as ConfigService;
 
-    const providerWithoutKey = new OpenWeatherProvider(missingKeyConfig);
+    const providerWithoutKey = new OpenWeatherProvider(missingKeyConfig, appLogger);
 
     await expect(providerWithoutKey.getCurrentWeather('Atlanta')).rejects.toBeInstanceOf(
       ServiceUnavailableException,
